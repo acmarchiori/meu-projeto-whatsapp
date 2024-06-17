@@ -49,6 +49,16 @@ const readFinanceiro = () => {
     return readFileAndConvert('Financeiro.txt');
 };
 
+// Função para ler o arquivo de motoboys
+const readMotoboys = () => {
+    return readFileAndConvert('Financeiro.txt');
+};
+
+// Função para ler o arquivo de coloristas
+const readColoristas = () => {
+    return readFileAndConvert('Financeiro.txt');
+};
+
 // Função para obter uma lista de atendentes formatada para envio de mensagens
 const getFormattedAtendentes = async () => {
     const atendentes = await readAtendentes();
@@ -67,6 +77,18 @@ const getFormattedFinanceiro = async () => {
     return financeiro;
 };
 
+// Função para obter uma lista de motoboys formatada para envio de mensagens
+const getFormattedMotoboys = async () => {
+    const motoboys = await readMotoboys();
+    return motoboys;
+};
+
+// Função para obter uma lista de coloristas formatada para envio de mensagens
+const getFormattedColoristas = async () => {
+    const coloristas = await readColoristas();
+    return coloristas;
+};
+
 // Exportar as funções para uso em outros arquivos
 module.exports = { 
     readAtendentes, 
@@ -74,5 +96,7 @@ module.exports = {
     readFinanceiro,
     getFormattedAtendentes,
     getFormattedClientes,
-    getFormattedFinanceiro
+    getFormattedFinanceiro,
+    getFormattedMotoboys,
+    getFormattedColoristas
 };

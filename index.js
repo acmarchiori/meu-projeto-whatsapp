@@ -17,7 +17,7 @@ const client = new Client({
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-gpu'],
-        // executablePath: 'chrome-win/chrome.exe', // So retirar comentário quando for criar o executável para o windows
+        executablePath: 'chrome-win/chrome.exe', // Só retirar comentário quando for criar o executável para o Windows
     },
     webVersionCache: {
         type: 'remote',
@@ -57,37 +57,37 @@ const updateLastSentState = async () => {
 
 // Função para verificar se a mensagem de bom dia já foi enviada hoje
 const checkAndSendGoodMorningMessage = async () => {
-  try {
-      const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
-      const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+    try {
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+        const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
 
-      // Verifica se hoje é domingo
-      if (dayOfWeek === 0) {
-          console.log('Hoje é domingo, a mensagem de bom dia não será enviada.');
-          return;
-      }
+        // Verifica se hoje é domingo
+        if (dayOfWeek === 0) {
+            console.log('Hoje é domingo, a mensagem de bom dia não será enviada.');
+            return;
+        }
 
-      if (fs.existsSync(stateFilePath)) {
-          const stateContent = fs.readFileSync(stateFilePath, 'utf8');
-          const state = stateContent ? JSON.parse(stateContent) : { lastSent: null };
-          const lastSent = state.lastSent;
+        if (fs.existsSync(stateFilePath)) {
+            const stateContent = fs.readFileSync(stateFilePath, 'utf8');
+            const state = stateContent ? JSON.parse(stateContent) : { lastSent: null };
+            const lastSent = state.lastSent;
 
-          if (lastSent !== todayString) {
-              console.log('Enviando mensagem de bom dia para os clientes...');
-              await sendGoodMorningMessage();
-          } else {
-              console.log('A mensagem de bom dia já foi enviada hoje.');
-          }
-      } else {
-          console.log('Enviando mensagem de bom dia para os clientes...');
-          await sendGoodMorningMessage();
-      }
-  } catch (error) {
-      console.error('Erro ao verificar o estado de envio:', error);
-      console.log('Enviando mensagem de bom dia para os clientes por precaução...');
-      await sendGoodMorningMessage();
-  }
+            if (lastSent !== todayString) {
+                console.log('Enviando mensagem de bom dia para os clientes...');
+                await sendGoodMorningMessage();
+            } else {
+                console.log('A mensagem de bom dia já foi enviada hoje.');
+            }
+        } else {
+            console.log('Enviando mensagem de bom dia para os clientes...');
+            await sendGoodMorningMessage();
+        }
+    } catch (error) {
+        console.error('Erro ao verificar o estado de envio:', error);
+        console.log('Enviando mensagem de bom dia para os clientes por precaução...');
+        await sendGoodMorningMessage();
+    }
 };
 
 // Inicialização do cliente
@@ -112,17 +112,14 @@ client.on('message_create', async (message) => {
     const from = message.from;
     const body = message.body.trim();
     const notifyName = message._data.notifyName || 'Cliente';
-    const messageId = message.id;
+    const messageId = message.id.id;
     const messageTimestamp = message.timestamp * 1000; // Converter o timestamp para milissegundos
 
     console.log('Mensagem criada:', body);
     console.log('Remetente:', from);
 
     // Ignora mensagens enviadas pelo próprio bot
-    if (from === '5513974051880@c.us' || 
-        from === '5513991017802@c.us' ||
-        from === '551334728623@c.us' || 
-        from === '5513988137679@c.us') {
+    if (['5513974051880@c.us', '5513991017802@c.us', '551334728623@c.us', '5513988137679@c.us'].includes(from)) {
         console.log('Mensagem ignorada: enviada pelo próprio bot');
         return;
     }
@@ -130,8 +127,8 @@ client.on('message_create', async (message) => {
     // Ignora mensagens duplicadas, antigas, de grupos e de broadcast de status do WhatsApp
     if (receivedMessageIds.has(messageId) || 
         messageTimestamp < appStartTime || 
-        message.from.endsWith('@g.us') ||
-        message.from.endsWith('@broadcast')) {
+        from.endsWith('@g.us') ||
+        from.endsWith('@broadcast')) {
         return;
     }
 
@@ -172,30 +169,30 @@ client.on('message_create', async (message) => {
     setInactivityTimeout(client, from, state);
 
     try {
-      switch (state.step) {
-          case 0:
-              // Remove a verificação de "oi" para iniciar com qualquer mensagem
-              await sendMenu(client, message, notifyName);
-              state.pedidosEnviados = false;
-              state.step = 1;
-              break;
-          case 1:
-              await handleMainMenuSelection(client, message, state, body, notifyName);
-              break;
-          case 2:
-              await handlePedidosSubMenu(client, message, state, body, notifyName);
-              break;
-          case 3:
-              await handlePedido(client, message, state, body, notifyName);
-              break;
-          case 4:
-              await handleDuvidasOuProblemas(client, message, state, body, notifyName);
-              break;
-          default:
-              console.error('Estado desconhecido:', state.step);
-    }
+        switch (state.step) {
+            case 0:
+                // Remove a verificação de "oi" para iniciar com qualquer mensagem
+                await sendMenu(client, message, notifyName);
+                state.pedidosEnviados = false;
+                state.step = 1;
+                break;
+            case 1:
+                await handleMainMenuSelection(client, message, state, body, notifyName);
+                break;
+            case 2:
+                await handlePedidosSubMenu(client, message, state, body, notifyName);
+                break;
+            case 3:
+                await handlePedido(client, message, state, body, notifyName);
+                break;
+            case 4:
+                await handleDuvidasOuProblemas(client, message, state, body, notifyName);
+                break;
+            default:
+                console.error('Estado desconhecido:', state.step);
+        }
     } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
+        console.error('Erro ao processar mensagem:', error);
     }
 });
 

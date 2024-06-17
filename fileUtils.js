@@ -51,12 +51,12 @@ const readFinanceiro = () => {
 
 // Função para ler o arquivo de motoboys
 const readMotoboys = () => {
-    return readFileAndConvert('Financeiro.txt');
+    return readFileAndConvert('Motoboys.txt');
 };
 
 // Função para ler o arquivo de coloristas
 const readColoristas = () => {
-    return readFileAndConvert('Financeiro.txt');
+    return readFileAndConvert('Coloristas.txt');
 };
 
 // Função para obter uma lista de atendentes formatada para envio de mensagens

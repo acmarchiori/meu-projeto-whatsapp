@@ -1,0 +1,5 @@
+node_modules/
+build/
+chrome-win/
+.vscode/
+.wwebjs_auth/

@@ -9,7 +9,7 @@ const { handleMainMenuSelection, handlePedidosSubMenu, handlePedido, handleDuvid
 const { setInactivityTimeout } = require('./utils');
 
 // Caminho para o arquivo de estado do envio
-const stateFilePath = path.join(__dirname, 'send_state.json');
+const stateFilePath = path.join('./send_state.json');
 
 // Configurações do cliente
 const client = new Client({
@@ -17,7 +17,7 @@ const client = new Client({
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-gpu'],
-        executablePath: 'chrome-win/chrome.exe', // Só retirar comentário quando for criar o executável para o Windows
+        executablePath: '../chrome-win/chrome.exe', // Só retirar comentário quando for criar o executável para o Windows
     },
     webVersionCache: {
         type: 'remote',
@@ -27,7 +27,7 @@ const client = new Client({
 
 const customerState = {}; // Estado dos clientes
 const receivedMessageIds = new Set(); // Armazena os IDs das mensagens recebidas
-const appStartTime = Date.now();
+const appStartTime = Date.now(); // Timestamp de início do aplicativo
 
 // Função para enviar mensagem de bom dia
 const sendGoodMorningMessage = async () => {

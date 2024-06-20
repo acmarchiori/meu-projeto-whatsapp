@@ -17,7 +17,7 @@ const client = new Client({
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-gpu'],
-        executablePath: '../chrome-win/chrome.exe', // Só retirar comentário quando for criar o executável para o Windows
+        // executablePath: '../chrome-win/chrome.exe', // Só retirar comentário quando for criar o executável para o Windows
     },
     webVersionCache: {
         type: 'remote',
@@ -93,11 +93,11 @@ const checkAndSendGoodMorningMessage = async () => {
 // Inicialização do cliente
 client.on('qr', (qr) => {
     qrcode.generate(qr, { small: true });
-    console.log('QR code received, scan please!');
+    console.log('QR code recebido, por favor escaneie!');
 });
 
 client.on('ready', async () => {
-    console.log('Client is ready!');
+    console.log('Cliente está pronto!');
     await checkAndSendGoodMorningMessage();
 });
 
@@ -124,11 +124,13 @@ client.on('message_create', async (message) => {
         return;
     }
 
-    // Ignora mensagens duplicadas, antigas, de grupos e de broadcast de status do WhatsApp
+    // Ignora mensagens duplicadas, antigas, de grupos, de broadcast de status do WhatsApp e de newsletter
     if (receivedMessageIds.has(messageId) || 
         messageTimestamp < appStartTime || 
         from.endsWith('@g.us') ||
-        from.endsWith('@broadcast')) {
+        from.endsWith('@broadcast') ||
+        from.endsWith('@newsletter')) {
+        console.log('Mensagem ignorada: duplicada, antiga, de grupo, de broadcast ou de newsletter');
         return;
     }
 

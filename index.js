@@ -31,7 +31,7 @@ const appStartTime = Date.now(); // Timestamp de início do aplicativo
 
 // Função para enviar mensagem de bom dia
 const sendGoodMorningMessage = async () => {
-    const message = 'Bom dia! Estamos aqui para ajudar 😀. Você está precisando de algo hoje? 🎨\n\n' +
+    const message = 'Bom dia, somos a Almeida Tintas! 🎨 Estamos aqui para ajudar 😀. Você está precisando de algo hoje?\n\n' +
                     'Nosso endereço: Av Presidente Kennedy, 6145 - Vila Tupi';
     const clients = await getFormattedClientes();
     for (const clientNumber of clients) {

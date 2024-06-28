@@ -34,6 +34,17 @@ const readFileAndConvert = (filePath) => {
     }
 };
 
+// Função para ler o arquivo de mensagem para clientes
+const readMensagemClientes = () => {
+    try {
+        const data = fs.readFileSync('MensagemClientes.txt', 'utf8');
+        return data.trim();
+    } catch (error) {
+        console.error('Erro ao ler o arquivo MensagemClientes.txt:', error);
+        return '';
+    }
+};
+
 // Função para ler o arquivo de atendentes
 const readAtendentes = () => {
     return readFileAndConvert('Atendentes.txt');
@@ -94,6 +105,7 @@ module.exports = {
     readAtendentes, 
     readClientes, 
     readFinanceiro,
+    readMensagemClientes,
     getFormattedAtendentes,
     getFormattedClientes,
     getFormattedFinanceiro,

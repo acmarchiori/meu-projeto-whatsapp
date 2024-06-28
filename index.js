@@ -1,15 +1,17 @@
 const qrcode = require('qrcode-terminal');
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
-const { getFormattedClientes } = require('./fileUtils');
+const { getFormattedClientes, readMensagemClientes } = require('./fileUtils'); // Importa a nova função
 const { sendMenu } = require('./menus');
 const { handleMainMenuSelection, handlePedidosSubMenu, handlePedido, handleDuvidasOuProblemas } = require('./handlers');
 const { setInactivityTimeout } = require('./utils');
-
-// Caminho para o arquivo de estado do envio
-const stateFilePath = path.join('./send_state.json');
+const imageFolder = './image'; // Caminho para a pasta de imagens
+const stateFilePath = path.join('./send_state.json'); // Caminho para o arquivo de estado do envio
+const customerState = {}; // Estado dos clientes
+const receivedMessageIds = new Set(); // Armazena os IDs das mensagens recebidas
+const appStartTime = Date.now(); // Timestamp de início do aplicativo
 
 // Configurações do cliente
 const client = new Client({
@@ -25,23 +27,35 @@ const client = new Client({
     }
 });
 
-const customerState = {}; // Estado dos clientes
-const receivedMessageIds = new Set(); // Armazena os IDs das mensagens recebidas
-const appStartTime = Date.now(); // Timestamp de início do aplicativo
-
-// Função para enviar mensagem de bom dia
+// Função para enviar mensagem de bom dia com imagens
 const sendGoodMorningMessage = async () => {
-    const message = 'Bom dia, somos a Almeida Tintas! 🎨 Estamos aqui para ajudar 😀. Você está precisando de algo hoje?\n\n' +
-                    'Nosso endereço: Av Presidente Kennedy, 6145 - Vila Tupi';
+    const message = readMensagemClientes(); // Lê a mensagem do arquivo
     const clients = await getFormattedClientes();
+
+    // Verifica se há imagens na pasta image
+    const images = fs.readdirSync(imageFolder).filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
+    });
+
     for (const clientNumber of clients) {
         try {
+            // Envia mensagem de texto
             await client.sendMessage(clientNumber, message);
+
+            // Envia imagens se houver na pasta image
+            for (const image of images) {
+                const imagePath = path.join(imageFolder, image);
+                const media = MessageMedia.fromFilePath(imagePath);
+                await client.sendMessage(clientNumber, { media });
+            }
+
             console.log(`Mensagem de bom dia enviada para: ${clientNumber}`);
         } catch (error) {
             console.error(`Erro ao enviar mensagem para ${clientNumber}:`, error);
         }
     }
+
     updateLastSentState();
 };
 
@@ -119,7 +133,7 @@ client.on('message_create', async (message) => {
     console.log('Remetente:', from);
 
     // Ignora mensagens enviadas pelo próprio bot
-    if (['5513974051880@c.us', '5513991017802@c.us', '551334728623@c.us', '5513988137679@c.us'].includes(from)) {
+    if (['5513974051880@c.us', '551334728623@c.us', '5513988137679@c.us'].includes(from)) {
         console.log('Mensagem ignorada: enviada pelo próprio bot');
         return;
     }

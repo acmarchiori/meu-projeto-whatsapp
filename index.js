@@ -7,7 +7,7 @@ const { getFormattedClientes, readMensagemClientes } = require('./fileUtils'); /
 const { sendMenu } = require('./menus');
 const { handleMainMenuSelection, handlePedidosSubMenu, handlePedido, handleDuvidasOuProblemas } = require('./handlers');
 const { setInactivityTimeout } = require('./utils');
-const imageFolder = './image'; // Caminho para a pasta de imagens
+// const imageFolder = './image'; // Caminho para a pasta de imagens
 const stateFilePath = path.join('./send_state.json'); // Caminho para o arquivo de estado do envio
 const customerState = {}; // Estado dos clientes
 const receivedMessageIds = new Set(); // Armazena os IDs das mensagens recebidas
@@ -29,44 +29,65 @@ const client = new Client({
 
 // Função para enviar mensagem de bom dia com imagens
 const sendGoodMorningMessage = async () => {
-    const message = readMensagemClientes(); // Lê a mensagem do arquivo
-    const clients = await getFormattedClientes();
+  const message = readMensagemClientes(); // Lê a mensagem do arquivo
+  const clients = await getFormattedClientes();
+  const imageFolder = './image'; // Caminho para a pasta de imagens (verifique se está correto)
 
-    // Verifica se há imagens na pasta image
-    const images = fs.readdirSync(imageFolder).filter(file => {
-        const ext = path.extname(file).toLowerCase();
-        return ['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
-    });
+  let images = [];
 
-    for (const clientNumber of clients) {
-        try {
-            // Envia mensagem de texto
-            await client.sendMessage(clientNumber, message);
+  try {
+      // Verifica se há imagens na pasta image
+      images = fs.readdirSync(imageFolder).filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
+      });
+  } catch (error) {
+      console.error('Erro ao ler imagens da pasta:', error);
+  }
 
-            // Envia imagens se houver na pasta image
-            for (const image of images) {
-                const imagePath = path.join(imageFolder, image);
-                const media = MessageMedia.fromFilePath(imagePath);
-                await client.sendMessage(clientNumber, { media });
-            }
+  console.log('Imagens encontradas na pasta:', images);
 
-            console.log(`Mensagem de bom dia enviada para: ${clientNumber}`);
-        } catch (error) {
-            console.error(`Erro ao enviar mensagem para ${clientNumber}:`, error);
-        }
-    }
+  try {
+      // Envia mensagem de texto uma vez para todos os clientes
+      for (const clientNumber of clients) {
+          await client.sendMessage(clientNumber, message);
+      }
 
-    updateLastSentState();
+      if (images.length > 0) {
+          // Envia todas as imagens encontradas na pasta image
+          const mediaArray = images.map(image => {
+              const imagePath = path.join(imageFolder, image);
+              return MessageMedia.fromFilePath(imagePath);
+          });
+
+          // Envia todas as imagens como uma mensagem única para todos os clientes
+          await Promise.all(
+              clients.map(async clientNumber => {
+                  for (const media of mediaArray) {
+                      await client.sendMessage(clientNumber, media);
+                  }
+              })
+          );
+
+          console.log(`Todas as imagens de bom dia foram enviadas para os clientes.`);
+      } else {
+          console.log(`Não há imagens para enviar.`);
+      }
+  } catch (error) {
+      console.error('Erro ao enviar mensagem de bom dia com imagens:', error);
+  }
+
+  updateLastSentState();
 };
 
 // Função para atualizar o estado do envio no arquivo
 const updateLastSentState = async () => {
-    const state = { lastSent: new Date().toISOString().split('T')[0] };
-    try {
-        await fs.promises.writeFile(stateFilePath, JSON.stringify(state));
-    } catch (error) {
-        console.error('Erro ao atualizar estado de envio:', error);
-    }
+  const state = { lastSent: new Date().toISOString().split('T')[0] };
+  try {
+      await fs.promises.writeFile(stateFilePath, JSON.stringify(state));
+  } catch (error) {
+      console.error('Erro ao atualizar estado de envio:', error);
+  }
 };
 
 // Função para verificar se a mensagem de bom dia já foi enviada hoje
@@ -124,7 +145,7 @@ cron.schedule('30 8 * * 1-6', () => {
 // Evento de recebimento de mensagens
 client.on('message_create', async (message) => {
     const from = message.from;
-    const body = message.body.trim();
+    const body = typeof message.body === 'string' ? message.body.trim() : ''; // Verifica se message.body é uma string antes de chamar trim()
     const notifyName = message._data.notifyName || 'Cliente';
     const messageId = message.id.id;
     const messageTimestamp = message.timestamp * 1000; // Converter o timestamp para milissegundos

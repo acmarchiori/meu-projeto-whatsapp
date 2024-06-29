@@ -1,22 +1,19 @@
-const { 
-  getFormattedAtendentes, 
-  getFormattedFinanceiro, 
-  getFormattedMotoboys, 
-  getFormattedColoristas 
+const {
+  getFormattedAtendentes,
+  getFormattedFinanceiro,
+  getFormattedMotoboys,
+  getFormattedColoristas
 } = require('./fileUtils');
-const { submenuPedidos, sendMenu } = require('./menus');
+const { submenuPedidos, sendPedidosMenu, sendMenu } = require('./menus');
 const { setInactivityTimeout } = require('./utils');
-const googleMapsLink = 'https://www.google.com/maps?q=-24.0212053677647,-46.46688947950904';
-const wazeLink = 'https://waze.com/ul?ll=-24.0212053677647,-46.46688947950904&navigate=yes';
-const endereco = '*Av Presidente Kennedy, 6145 - Vila Tupi*';
-const enderecoComLink = `Nosso endereço: ${endereco}\n\n` +
-                      `Waze: ${wazeLink}\n` +
-                      `Google Maps: ${googleMapsLink}`;
 
-let ultimaMensagemInvalida = {}; // Armazenar o timestamp da última mensagem inválida por cliente
-const tempoEsperaOpcaoInvalida = 5 * 60 * 1000; // 5 minutos em milissegundos
+const endereco = 'Av Presidente Kennedy, 6145 - Vila Tupi';
+const mainMenuMessage = `Digite *#sair* para encerrar o atendimento.`;
+const subMenuMessage = `Digite *#voltar* para voltar ao menu anterior.`;
 
-// Função para formatar as informações do cliente
+let ultimaMensagemInvalida = {};
+const tempoEsperaOpcaoInvalida = 5 * 60 * 1000;
+
 const formatClientInfo = (notifyName, from) => {
   return `Cliente ${notifyName.replace(/\p{Emoji}/gu, '')} ${from.replace('@c.us', '').replace(/^(\d{2})(\d{2})(\d{5})(\d{4})$/, '+$1 $2 $3-$4')}`;
 };
@@ -31,7 +28,7 @@ const handleMainMenuSelection = async (client, message, state, body, notifyName)
       return;
   }
 
-  setInactivityTimeout(client, from, state); // Redefine o timeout de inatividade
+  setInactivityTimeout(client, from, state);
 
   switch (body) {
       case '1':
@@ -51,19 +48,19 @@ const handleMainMenuSelection = async (client, message, state, body, notifyName)
                   await client.sendMessage(motoboy, statusEntrega);
               }
 
-              await client.sendMessage(message.from, `Um atendente entrará em contato com você em breve para informar sobre a entrega.\n\n${enderecoComLink}`);
+              await client.sendMessage(message.from, `Um atendente entrará em contato com você em breve para informar sobre a entrega.\n\n${endereco}`);
               state.step = 0;
               break;
           }
       case '3':
-          await client.sendMessage(message.from, 'Por favor, descreva em texto sua dúvida ou problema:');
+          await client.sendMessage(message.from, `Por favor, descreva em texto sua dúvida ou problema:\n\n${subMenuMessage}\n\n${mainMenuMessage}`);
           state.step = 4;
           break;
       case '4':
           {
-              const catalogoLink = 'https://wa.me/c/551334728623'; // Link direto para o catálogo do WhatsApp Business
+              const catalogoLink = 'https://wa.me/c/551334728623';
               await client.sendMessage(message.from, `Confira nosso catálogo completo aqui: ${catalogoLink}\n` +
-                  `Você pode visualizar os produtos e retornar ao WhatsApp para fazer pedidos.`);
+                  `Você pode visualizar os produtos e retornar ao WhatsApp para fazer pedidos.\n\n${subMenuMessage}\n\n${mainMenuMessage}`);
               state.step = 0;
               break;
           }
@@ -74,7 +71,7 @@ const handleMainMenuSelection = async (client, message, state, body, notifyName)
               for (const financeiroContact of financeiroContacts) {
                   await client.sendMessage(financeiroContact, clientMessage);
               }
-              await client.sendMessage(message.from, `Alguém do setor financeiro entrará em contato com você em breve.\n\n${enderecoComLink}`);
+              await client.sendMessage(message.from, `Alguém do setor financeiro entrará em contato com você em breve.\n\n${endereco}`);
               state.step = 0;
               break;
           }
@@ -85,7 +82,7 @@ const handleMainMenuSelection = async (client, message, state, body, notifyName)
               for (const colorista of coloristas) {
                   await client.sendMessage(colorista, clientMessageColorista);
               }
-              await client.sendMessage(message.from, `Um colorista entrará em contato com você em breve.\n\n${enderecoComLink}`);
+              await client.sendMessage(message.from, `Um colorista entrará em contato com você em breve.\n\n${endereco}`);
               state.step = 0;
               break;
           }
@@ -102,8 +99,8 @@ const handlePedidosSubMenu = async (client, message, state, body, notifyName) =>
   const from = message.from;
 
   if (body.toLowerCase() === '#voltar') {
-      await sendMenu(client, message, notifyName);
-      state.step = 0;
+      await sendMenu(client, message, notifyName); // Aqui usamos sendMenu para voltar ao menu principal
+      state.step = 1; // Reiniciamos state.step para o menu principal
       return;
   }
   if (body.toLowerCase() === '#sair') {
@@ -112,11 +109,11 @@ const handlePedidosSubMenu = async (client, message, state, body, notifyName) =>
       return;
   }
 
-  setInactivityTimeout(client, from, state); // Redefine o timeout de inatividade
+  setInactivityTimeout(client, from, state);
 
   switch (body) {
       case '1':
-          await client.sendMessage(message.from, 'Por favor, digite o seu pedido:');
+          await client.sendMessage(message.from, `Por favor, digite o seu pedido:\n\n${subMenuMessage}\n\n${mainMenuMessage}`);
           state.step = 3;
           break;
       case '2':
@@ -129,7 +126,7 @@ const handlePedidosSubMenu = async (client, message, state, body, notifyName) =>
                   }
               }
               if (!state.pedidosEnviados) {
-                  await client.sendMessage(message.from, `Um atendente entrará em contato com você em breve.\n\n${enderecoComLink}`);
+                  await client.sendMessage(message.from, `Um atendente entrará em contato com você em breve.\n\n${endereco}`);
                   state.pedidosEnviados = true;
               }
               state.step = 0;
@@ -147,8 +144,8 @@ const handlePedido = async (client, message, state, body, notifyName) => {
   const from = message.from;
 
   if (body.toLowerCase() === '#voltar') {
-      await sendMenu(client, message, notifyName);
-      state.step = 0;
+      await sendPedidosMenu(client, message, notifyName); // Utilizando sendPedidosMenu para voltar ao submenu
+      state.step = 2; // Atualizando state.step para o submenu de pedidos
       return;
   }
   if (body.toLowerCase() === '#sair') {
@@ -157,7 +154,7 @@ const handlePedido = async (client, message, state, body, notifyName) => {
       return;
   }
 
-  setInactivityTimeout(client, from, state); // Redefine o timeout de inatividade
+  setInactivityTimeout(client, from, state);
 
   const clientInfo = formatClientInfo(notifyName, from);
   const pedido = `Pedido de *${clientInfo}*: \n${body}`;
@@ -168,7 +165,7 @@ const handlePedido = async (client, message, state, body, notifyName) => {
       }
   }
   if (!state.pedidosEnviados) {
-      await message.reply(`Seu pedido foi enviado para nossos atendentes. Você será contatado em breve.\n\n${enderecoComLink}`);
+      await message.reply(`Seu pedido foi enviado para nossos atendentes. Você será contatado em breve.\n\n${endereco}`);
       state.pedidosEnviados = true;
   }
   state.step = 0;
@@ -179,7 +176,7 @@ const handleDuvidasOuProblemas = async (client, message, state, body, notifyName
 
   if (body.toLowerCase() === '#voltar') {
       await sendMenu(client, message, notifyName);
-      state.step = 0;
+      state.step = 1; // Reiniciamos state.step para o menu principal
       return;
   }
   if (body.toLowerCase() === '#sair') {
@@ -188,7 +185,7 @@ const handleDuvidasOuProblemas = async (client, message, state, body, notifyName
       return;
   }
 
-  setInactivityTimeout(client, from, state); // Redefine o timeout de inatividade
+  setInactivityTimeout(client, from, state);
 
   const clientInfo = formatClientInfo(notifyName, message.from);
   const duvidaProblema = `Dúvida ou Problema de *${clientInfo}*: \n${body}`;
@@ -196,13 +193,13 @@ const handleDuvidasOuProblemas = async (client, message, state, body, notifyName
   for (const atendente of atendentes) {
       await client.sendMessage(atendente, duvidaProblema);
   }
-  await message.reply(`Sua dúvida ou problema foi enviado para nossos atendentes. Você será contatado em breve.\n\n${enderecoComLink}`);
+  await message.reply(`Sua dúvida ou problema foi enviado para nossos atendentes. Você será contatado em breve.\n\n${endereco}`);
   state.step = 0;
 };
 
-module.exports = { 
-  handleMainMenuSelection, 
-  handlePedidosSubMenu, 
-  handlePedido, 
-  handleDuvidasOuProblemas 
+module.exports = {
+  handleMainMenuSelection,
+  handlePedidosSubMenu,
+  handlePedido,
+  handleDuvidasOuProblemas
 };
